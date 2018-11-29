@@ -4,7 +4,10 @@ Transit transports for nREPL.
 
 ## Motivation
 
-A Transit transport simplifies the lives of people using Clojure/ClojureScript/Java clients for nREPL. We use [transit-clj][tclj] to implement transports to be used with nREPL, it supports transit with message pack, json and json verbose.
+A Transit transport simplifies the lives of people using
+Clojure/ClojureScript/Java clients for nREPL. We use
+[transit-clj][tclj] to implement transports to be used with nREPL, it
+supports transit with message pack, json and json verbose.
 
 [tclj]: https://github.com/cognitect/transit-clj/blob/master/src/cognitect/transit.clj
 
@@ -13,7 +16,7 @@ A Transit transport simplifies the lives of people using Clojure/ClojureScript/J
 Just add fastlane as a dependency to your project and you can use it as a transport for nREPL.
 
 ```clojure
-[nrepl/fastlane "0.1.0-SNAPSHOT"]
+[nrepl/fastlane "0.1.0"]
 ```
 
 The transports are at fastlane.core:
@@ -21,6 +24,22 @@ The transports are at fastlane.core:
 * `transit+msgpack`
 * `transit+json`
 * `transit+json-verbose`
+
+Afterwards you can start the server like this:
+
+``` clojure
+(require
+ '[nrepl.server :as server]
+ '[fastlane.core :as fastlane])
+
+(server/start-server :port 12345 :transport-fn fastlane/transit+json)
+```
+
+You can also start it via the built-in nREPL CLI:
+
+``` shell
+$ clj -R:nrepl -m nrepl.cmdline -t fastlane.core/transit+json
+```
 
 ## License
 

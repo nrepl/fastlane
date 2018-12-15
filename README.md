@@ -38,7 +38,8 @@ Afterwards you can start the server like this:
 You can also start it via the built-in nREPL CLI:
 
 ``` shell
-$ clj -R:nrepl -m nrepl.cmdline -t fastlane.core/transit+json
+# Change the nREPL and fastlane versions to your preferences
+$ clj -Sdeps '{:deps {nrepl {:mvn/version "0.6.0-SNAPSHOT"} nrepl/fastlane {:mvn/version "0.2.0-SNAPSHOT"}}}' -m nrepl.cmdline --transport fastlane.core/transit+json
 ```
 
 ## License

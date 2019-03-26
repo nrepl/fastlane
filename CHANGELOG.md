@@ -1,3 +1,7 @@
 # Change Log
 
-## master
+## master (unreleased)
+
+### Changes
+
+* Adds uri scheme to transit transports.

@@ -3,7 +3,7 @@
    [clojure.java.io :as io]
    [cognitect.transit :as transit]
    [nrepl.core :as nrepl]
-   [nrepl.transport :refer [fn-transport]])
+   [nrepl.transport :as transport :refer [fn-transport]])
   (:import
    [java.io EOFException PushbackInputStream]
    [java.net Socket SocketException]))
@@ -97,6 +97,8 @@
                                        :port 7888}
                                       (socket-info uri)))))
 
+(defmethod transport/uri-scheme #'transit+msgpack [_] "transit+msgpack")
+
 (defmethod nrepl/url-connect "transit+json"
   [uri]
   (apply nrepl/connect (mapcat identity
@@ -104,9 +106,13 @@
                                        :port 7888}
                                       (socket-info uri)))))
 
+(defmethod transport/uri-scheme #'transit+json [_] "transit+json")
+
 (defmethod nrepl/url-connect "transit+json-verbose"
   [uri]
   (apply nrepl/connect (mapcat identity
                                (merge {:transport-fn transit+json-verbose
                                        :port 7888}
                                       (socket-info uri)))))
+
+(defmethod transport/uri-scheme #'transit+json-verbose [_] "transit+json-verbose")

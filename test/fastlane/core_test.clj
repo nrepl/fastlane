@@ -2,7 +2,8 @@
   (:require [clojure.test :refer [deftest is testing use-fixtures]]
             [fastlane.core :as fastlane]
             [nrepl.core :as nrepl]
-            [nrepl.server :as server]))
+            [nrepl.server :as server]
+            [nrepl.transport :as transport]))
 
 (def transport-fn->protocol
   "Add your transport-fn var here so it can be tested"
@@ -34,3 +35,8 @@
                  (nrepl/message {:op "eval" :code "(+ 2 3)"})
                  nrepl/response-values)))
          [5])))
+
+(deftest uri-scheme
+  (let [expected (transport-fn->protocol *transport-fn*)]
+    (is (= expected
+           (transport/uri-scheme *transport-fn*)))))

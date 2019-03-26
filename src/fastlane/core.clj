@@ -1,6 +1,7 @@
 (ns fastlane.core
   (:require
    [clojure.java.io :as io]
+   [clojure.walk :as walk]
    [cognitect.transit :as transit]
    [nrepl.core :as nrepl]
    [nrepl.transport :as transport :refer [fn-transport]])
@@ -12,12 +13,24 @@
   [^Socket s & body]
   `(try
      ~@body
+     (catch RuntimeException e#
+       (throw (SocketException. "The transport's socket appears to have lost its connection to the nREPL server")))
      (catch EOFException e#
        (throw (SocketException. "The transport's socket appears to have lost its connection to the nREPL server")))
      (catch Throwable e#
        (if (and ~s (not (.isConnected ~s)))
          (throw (SocketException. "The transport's socket appears to have lost its connection to the nREPL server"))
          (throw e#)))))
+
+(defn- read-shim
+  [msg]
+  (cond-> msg
+    (contains? msg :op) (update :op name)))
+
+(defn- write-shim
+  [msg]
+  (cond-> msg
+    (contains? msg :ops) (update :ops walk/keywordize-keys)))
 
 (defn build-transit-transport-using-type
   "Returns a functions with a Transport implementation that serializes
@@ -32,24 +45,14 @@
            reader (transit/reader in transit-type)
            writer (transit/writer out transit-type)]
        (fn-transport
-        #(let [payload (rethrow-on-disconnection s (try
-                                                     (transit/read reader)
-                                                     (catch RuntimeException e
-                                                       (throw (.getCause e)))))]
-           (cond-> payload
-             (get payload "op") (update "op" name)
-             (get payload "status") (update "status"
-                                            (fn [status]
-                                              (if (coll? status)
-                                                (map name status)
-                                                (name status))))))
+        #(rethrow-on-disconnection s (read-shim (transit/read reader)))
         #(rethrow-on-disconnection s
                                    (locking out
-                                     (try
-                                       (transit/write writer %)
-                                       (.flush out)
-                                       (catch RuntimeException e
-                                         (throw (.getCause e))))))
+                                     (binding [*print-readably* true
+                                               *print-length*   nil
+                                               *print-level*    nil]
+                                       (transit/write writer (write-shim %))
+                                       (.flush out))))
         (fn []
           (if s
             (.close s)

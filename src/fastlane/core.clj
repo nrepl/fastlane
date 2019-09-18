@@ -22,16 +22,6 @@
          (throw (SocketException. "The transport's socket appears to have lost its connection to the nREPL server"))
          (throw e#)))))
 
-(defn- read-shim
-  [msg]
-  (cond-> msg
-    (contains? msg :op) (update :op name)))
-
-(defn- write-shim
-  [msg]
-  (cond-> msg
-    (contains? msg :ops) (update :ops walk/keywordize-keys)))
-
 (defn build-transit-transport-using-type
   "Returns a functions with a Transport implementation that serializes
   messages over the given Socket or InputStream/OutputStream with Transit
@@ -45,13 +35,13 @@
            reader (transit/reader in transit-type)
            writer (transit/writer out transit-type)]
        (fn-transport
-        #(rethrow-on-disconnection s (read-shim (transit/read reader)))
+        #(rethrow-on-disconnection s (transit/read reader))
         #(rethrow-on-disconnection s
                                    (locking out
                                      (binding [*print-readably* true
                                                *print-length*   nil
                                                *print-level*    nil]
-                                       (transit/write writer (write-shim %))
+                                       (transit/write writer %)
                                        (.flush out))))
         (fn []
           (if s
